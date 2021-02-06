@@ -1,7 +1,6 @@
 package cn.chainboard.ledgeryi.app.erc.service;
 
 import cn.chainboard.ledgeryi.app.erc.ContractReceipt;
-import cn.chainboard.ledgeryi.app.erc.ErcContract;
 import cn.chainboard.ledgeryi.app.erc.TokenInfo;
 import cn.ledgeryi.protos.Protocol;
 import cn.ledgeryi.protos.Protocol.Transaction.Result.ContractResult;
@@ -21,6 +20,7 @@ import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+
 import javax.annotation.PostConstruct;
 import java.nio.file.Path;
 import java.nio.file.Paths;

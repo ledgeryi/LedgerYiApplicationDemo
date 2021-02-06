@@ -3,14 +3,9 @@ package ledgeryi.app.erc721;
 import cn.chainboard.ledgeryi.app.erc.TokenInfo;
 import cn.chainboard.ledgeryi.app.erc.service.Erc721ContractServiceImpl;
 import cn.chainboard.ledgeryi.app.erc.service.LedgerYiService;
-import cn.ledgeryi.sdk.common.utils.ByteUtil;
 import cn.ledgeryi.sdk.serverapi.data.DeployContractReturn;
-import cn.ledgeryi.sdk.serverapi.data.TriggerContractReturn;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.Arrays;
-import java.util.List;
 
 public class ERC721Test {
 
