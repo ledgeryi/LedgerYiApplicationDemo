@@ -1,7 +1,6 @@
 package cn.chainboard.ledgeryi.app.erc.service;
 
 import cn.chainboard.ledgeryi.app.erc.ContractReceipt;
-import cn.chainboard.ledgeryi.app.erc.TokenInfo;
 import cn.ledgeryi.protos.Protocol;
 import cn.ledgeryi.protos.Protocol.Transaction.Result.ContractResult;
 import cn.ledgeryi.protos.contract.SmartContractOuterClass;
@@ -16,15 +15,12 @@ import cn.ledgeryi.sdk.serverapi.data.DeployContractReturn;
 import cn.ledgeryi.sdk.serverapi.data.TriggerContractParam;
 import cn.ledgeryi.sdk.serverapi.data.TriggerContractReturn;
 import com.alibaba.fastjson.JSONObject;
-import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -56,89 +52,12 @@ public class LedgerYiService {
         return jsonObject.getString("entrys");
     }
 
-
-    /**
-     * 同质化合约
-     * @param ownerAddress 合约拥有者地址
-     * @param privateKey 拥有者私钥
-     * @param tokenInfo 合约参数
-     * @return DeployContractReturn
-     */
-    public DeployContractReturn erc20Contract(String ownerAddress, String privateKey, TokenInfo tokenInfo){
-        DeployContractParam result;
-        try {
-            Path source = Paths.get("contract","erc20","EIP20.sol");
-            result = ledgerYiApiService.compileContractFromFile(source,"EIP20");
-        } catch (ContractException e) {
-            log.error("contract compile error: " + e.getMessage());
-            return null;
-        }
-        return compileAndDeployErc20Contract(ownerAddress, privateKey, tokenInfo, result);
-
+    public DeployContractParam compileContractFromFile(Path source, String contractName) throws ContractException {
+        return ledgerYiApiService.compileContractFromFile(source,contractName);
     }
 
-    /**
-     * 非同质化合约
-     * @param ownerAddress 合约拥有者地址
-     * @param privateKey 拥有者私钥
-     * @param tokenInfo 合约参数
-     * @return DeployContractReturn
-     */
-    public DeployContractReturn erc721Contract(String ownerAddress, String privateKey, TokenInfo tokenInfo){
-        DeployContractParam result;
-        try {
-            Path source = Paths.get("contract","erc721","nf-token.sol");
-            result = ledgerYiApiService.compileContractFromFile(source,"ERC721NFT");
-        } catch (ContractException e) {
-            log.error("contract compile error: " + e.getMessage());
-            return null;
-        }
-        return compileAndDeployErc721Contract(ownerAddress, privateKey, tokenInfo, result);
-    }
-
-    private DeployContractReturn compileAndDeployErc721Contract(String ownerAddress, String privateKey,
-                                                                TokenInfo tokenInfo, DeployContractParam result){
-        DeployContractReturn deployContract = null;
-        try {
-            result.setConstructor("constructor(string,string,uint)");
-            ArrayList<Object> args = Lists.newArrayList();
-            args.add(tokenInfo.getName());
-            args.add(tokenInfo.getSymbol());
-            args.add(tokenInfo.getTotalSupply());
-            result.setArgs(args);
-            deployContract = ledgerYiApiService.deployContract(DecodeUtil.decode(ownerAddress),
-                    DecodeUtil.decode(privateKey), result);
-        } catch (CreateContractExecption e){
-            log.error("create contract error: " + e.getMessage());
-        }
-        return deployContract;
-    }
-
-    /**
-     * 编译和创建合约, ERC20
-     * @param ownerAddress 合约所有者地址
-     * @param privateKey 合约所有者的私钥
-     * @return DeployContractReturn 合约创建结果
-     */
-    private DeployContractReturn compileAndDeployErc20Contract(String ownerAddress, String privateKey,
-                                                               TokenInfo tokenInfo, DeployContractParam result){
-
-        DeployContractReturn deployContract = null;
-        try {
-            result.setConstructor("constructor(uint256,string,uint8,string)");
-            ArrayList<Object> args = Lists.newArrayList();
-            args.add(tokenInfo.getTotalSupply());
-            args.add(tokenInfo.getName());
-            args.add(tokenInfo.getDecimals());
-            args.add(tokenInfo.getSymbol());
-            result.setArgs(args);
-            deployContract = ledgerYiApiService.deployContract(DecodeUtil.decode(ownerAddress),
-                    DecodeUtil.decode(privateKey), result);
-        } catch (CreateContractExecption e){
-            log.error("create contract error: " + e.getMessage());
-        }
-        return deployContract;
-
+    public DeployContractReturn deployContract(byte[] ownerAddress, byte[] privateKey, DeployContractParam param) throws CreateContractExecption {
+        return ledgerYiApiService.deployContract(ownerAddress,privateKey,param);
     }
 
     /**

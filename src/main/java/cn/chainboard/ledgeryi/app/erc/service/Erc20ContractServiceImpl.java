@@ -2,18 +2,28 @@ package cn.chainboard.ledgeryi.app.erc.service;
 
 import cn.chainboard.ledgeryi.app.erc.TokenInfo;
 import cn.ledgeryi.sdk.common.utils.ByteUtil;
+import cn.ledgeryi.sdk.common.utils.DecodeUtil;
+import cn.ledgeryi.sdk.contract.compiler.exception.ContractException;
+import cn.ledgeryi.sdk.exception.CreateContractExecption;
+import cn.ledgeryi.sdk.serverapi.data.DeployContractParam;
 import cn.ledgeryi.sdk.serverapi.data.DeployContractReturn;
 import cn.ledgeryi.sdk.serverapi.data.TriggerContractReturn;
+import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.Strings;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+@Slf4j
 @Service
 @AllArgsConstructor //for test
 public class Erc20ContractServiceImpl implements IContractService {
@@ -23,7 +33,54 @@ public class Erc20ContractServiceImpl implements IContractService {
 
     @Override
     public DeployContractReturn deployContract(String ownerAddress, String privateKey, TokenInfo tokenInfo) {
-        return ledgerYiService.erc20Contract(ownerAddress, privateKey , tokenInfo);
+        return erc20Contract(ownerAddress, privateKey , tokenInfo);
+    }
+
+    /**
+     * 同质化合约
+     * @param ownerAddress 合约拥有者地址
+     * @param privateKey 拥有者私钥
+     * @param tokenInfo 合约参数
+     * @return DeployContractReturn
+     */
+    private DeployContractReturn erc20Contract(String ownerAddress, String privateKey, TokenInfo tokenInfo){
+        DeployContractParam result;
+        try {
+            Path source = Paths.get("contract","erc20","EIP20.sol");
+            result = ledgerYiService.compileContractFromFile(source,"EIP20");
+        } catch (ContractException e) {
+            log.error("contract compile error: " + e.getMessage());
+            return null;
+        }
+        return compileAndDeployErc20Contract(ownerAddress, privateKey, tokenInfo, result);
+
+    }
+
+    /**
+     * 编译和创建合约, ERC20
+     * @param ownerAddress 合约所有者地址
+     * @param privateKey 合约所有者的私钥
+     * @return DeployContractReturn 合约创建结果
+     */
+    private DeployContractReturn compileAndDeployErc20Contract(String ownerAddress, String privateKey,
+                                                               TokenInfo tokenInfo, DeployContractParam result){
+
+        DeployContractReturn deployContract = null;
+        try {
+            result.setConstructor("constructor(uint256,string,uint8,string)");
+            ArrayList<Object> args = Lists.newArrayList();
+            args.add(tokenInfo.getTotalSupply());
+            args.add(tokenInfo.getName());
+            args.add(tokenInfo.getDecimals());
+            args.add(tokenInfo.getSymbol());
+            result.setArgs(args);
+            deployContract = ledgerYiService.deployContract(DecodeUtil.decode(ownerAddress),
+                    DecodeUtil.decode(privateKey), result);
+        } catch (CreateContractExecption e){
+            log.error("create contract error: " + e.getMessage());
+        }
+        return deployContract;
+
     }
 
     @Override

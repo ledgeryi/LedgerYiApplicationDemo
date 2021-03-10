@@ -20,7 +20,7 @@
             <artifactId>sdk</artifactId>
             <version>beta-0.1.0</version>
             <scope>system</scope>
-            <systemPath>${project.basedir}/lib/sdk-beta-0.1.0-with-dependencies.jar</systemPath>
+            <systemPath>${project.basedir}/lib/sdk-beta-0.3.0-with-dependencies.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
